@@ -1,0 +1,25 @@
+{
+  "name": "graphql-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "ts-node": ".\\node_modules\\.bin\\ts-node",
+    "start": "NODE_ENV=development nodemon --config ./nodemon.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "apollo-server": "^3.13.0",
+    "graphql": "^16.11.0",
+    "nodemon": "^3.1.10",
+    "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "prisma": "^6.15.0"
+  }
+}
