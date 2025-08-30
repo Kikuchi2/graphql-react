@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client/react";
 import { gql } from "@apollo/client"
 import { useState } from "react";
-import { CheckCircle2, PlusCircle } from "lucide-react";
+import { CheckCircle2, PlusCircle, Delete } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "./components/ui/checkbox";
@@ -36,6 +36,16 @@ const UPDATE_TODO = gql`
   }
 `;
 
+const DELETE_TODO = gql`
+  mutation deleteTodo($id: ID!) {
+    deleteTodo(id: $id) {
+      id,
+      title,
+      completed
+    }
+  }
+`;
+
 type Todo = {
   id: string;
   title: string;
@@ -50,6 +60,7 @@ function App() {
   const todos = data ? data.getTodos : []; 
   const [addTodo] = useMutation(ADD_TODO);
   const [updateTodo] = useMutation(UPDATE_TODO)
+  const [deleteTodo] = useMutation(DELETE_TODO)
   const [title, setTitle] = useState("");
   const handleAddTodo = async () => {
     await addTodo({
@@ -62,6 +73,13 @@ function App() {
   const handleUpdateTodo = async (id: string, completed: boolean) => {
     await updateTodo({
       variables: { id, completed: !completed  },
+      refetchQueries: [{ query: GET_TODOS }]
+    })
+  }
+
+  const handleDeleteTodo = async (id: string) => {
+    await deleteTodo({
+      variables: { id },
       refetchQueries: [{ query: GET_TODOS }]
     })
   }
@@ -129,6 +147,15 @@ function App() {
                   {todo.completed && (
                     <CheckCircle2 className="w-5 h-5 text-teal-500 ml-2" />
                   )}
+
+                <Button
+                  id={`todo-${todo.id}`}
+                  onClick={() => 
+                    handleDeleteTodo(todo.id)
+                  }
+                >
+                <Delete />
+              </Button>
                 </motion.div>
               ))}
             </AnimatePresence>

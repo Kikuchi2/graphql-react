@@ -47,7 +47,7 @@ const resolvers = {
                 data: { completed }
             })
         },
-        deleteTodo: (_: unknown, { id }: { id: string}, context: Context) => {
+        deleteTodo: (_: unknown, { id }: { id: string }, context: Context) => {
             return context.prisma.todo.delete({
                 where: { id }
             })
