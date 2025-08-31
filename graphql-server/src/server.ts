@@ -11,15 +11,17 @@ const typeDefs = gql`
     type Todo {
         id: ID!
         title: String!
+        date: String!
         completed: Boolean! 
     }
 
     type Query {
-        getTodos: [Todo!]!
+        getAllTodos: [Todo!]!
+        getTodos(date: String!): [Todo!]!
     }
 
     type Mutation {
-        addTodo(title: String!): Todo!
+        addTodo(title: String!, date: String!): Todo!
         updateTodo(id: ID!, completed: Boolean!): Todo!
         deleteTodo(id: ID!): Todo!
     }
@@ -28,15 +30,26 @@ const typeDefs = gql`
 
 const resolvers = {
     Query: {
-        getTodos: async (_: unknown, __: any, context: Context) => {
+        getAllTodos: async (_: unknown, __: any, context: Context) => {
             return await context.prisma.todo.findMany();
+        },        
+        getTodos: async (_: unknown, { date }: { date: string }, context: Context) => {
+            return await context.prisma.todo.findMany({
+                where: { 
+                    date: String(date)
+                }
+            });
         },
     },
     Mutation: {
-        addTodo: (_: unknown, { title }: { title: string }, context: Context) => {
+        addTodo: (_: unknown, { title, date }: { title: string, date: string }, context: Context) => {
+            // let today = new Date();
+            // let formattedDate = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+
             return context.prisma.todo.create({
                 data: {
                     title,
+                    date: date,
                     completed: false
                 }
             })

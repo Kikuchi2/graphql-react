@@ -1,26 +1,28 @@
 import { useMutation, useQuery } from "@apollo/client/react";
 import { gql } from "@apollo/client"
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CheckCircle2, PlusCircle, Delete } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "./components/ui/button";
 import { Checkbox } from "./components/ui/checkbox";
 
 const GET_TODOS = gql`
-  query{
-    getTodos {
+  query GetTodos($date: String!) {
+    getTodos(date: $date) {
       id,
       title,
+      date,
       completed
     }
   }
 `;
 
 const ADD_TODO = gql`
-  mutation addTodo($title: String!) {
-      addTodo(title: $title) {
+  mutation addTodo($title: String!, $date: String!) {
+      addTodo(title: $title, date: $date) {
         id,
         title,
+        date,
         completed
       }
     }
@@ -31,6 +33,7 @@ const UPDATE_TODO = gql`
     updateTodo(id: $id, completed: $completed) {
       id,
       title,
+      date,
       completed
     }
   }
@@ -41,6 +44,7 @@ const DELETE_TODO = gql`
     deleteTodo(id: $id) {
       id,
       title,
+      date,
       completed
     }
   }
@@ -49,23 +53,29 @@ const DELETE_TODO = gql`
 type Todo = {
   id: string;
   title: string;
+  date: String;
   completed: boolean;
 }
 
 function App() {
-  const { loading, data } = useQuery(GET_TODOS, {
-    fetchPolicy :"network-only",
+  const today = new Date();
+  const formattedDate: string = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+  const [date, setDate] = useState(formattedDate)
+
+  const { loading, data } = useQuery<{ getTodos: Todo[] }>(GET_TODOS, {
+    variables: { date },
+    fetchPolicy: "network-only",
   });
 
-  const todos = data ? data.getTodos : []; 
+  const todos = useMemo(() => data?.getTodos ?? [], [data]) 
   const [addTodo] = useMutation(ADD_TODO);
   const [updateTodo] = useMutation(UPDATE_TODO)
   const [deleteTodo] = useMutation(DELETE_TODO)
   const [title, setTitle] = useState("");
   const handleAddTodo = async () => {
     await addTodo({
-      variables: { title },
-      refetchQueries: [{ query: GET_TODOS }]
+      variables: { title, date },
+      refetchQueries: [{ query: GET_TODOS, variables:{ date } }]
     })
     setTitle("")
   }
@@ -73,15 +83,34 @@ function App() {
   const handleUpdateTodo = async (id: string, completed: boolean) => {
     await updateTodo({
       variables: { id, completed: !completed  },
-      refetchQueries: [{ query: GET_TODOS }]
+      refetchQueries: [{ query: GET_TODOS, variables:{ date } }]
     })
   }
 
   const handleDeleteTodo = async (id: string) => {
     await deleteTodo({
       variables: { id },
-      refetchQueries: [{ query: GET_TODOS }]
+      refetchQueries: [{ query: GET_TODOS, variables:{ date } }]
     })
+  }
+
+  const handlePreviousDate = async () => {
+    // const temp = new Date(date)
+    const previousDate = new Date(date)
+    previousDate.setDate(previousDate.getDate() - 1)
+    const formattedPreviousDate: string = `${previousDate.getFullYear()}-${previousDate.getMonth() + 1}-${previousDate.getDate()}`;
+
+    setDate(formattedPreviousDate)
+    // console.log(formattedPreviousDate)
+  }
+
+  const handleNextDate = async () => {
+    const nextDate = new Date(date)
+    nextDate.setDate(nextDate.getDate() + 1)
+    const formattedNextDate: string =  `${nextDate.getFullYear()}-${nextDate.getMonth() + 1}-${nextDate.getDate()}`;
+
+    setDate(formattedNextDate)
+    // console.log(formattedNextDate)
   }
 
   if (loading) return <p>Loading....</p>
@@ -96,6 +125,7 @@ function App() {
         >
           <div className="bg-gradient-to-r from-teal-400 to-emerald-500 p-6">
             <h1 className="text-3xl font-bold text-white mb-2">To-Do List</h1>
+            <p><button onClick={handlePreviousDate}>←</button>{ date }<button onClick={handleNextDate}>→</button></p>
           </div>
           <div className="p-6">
             <div className="flex mb-4">
